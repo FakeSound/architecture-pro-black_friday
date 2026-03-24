@@ -11,8 +11,6 @@ services:
       - mongos_router
     ports:
       - 8080:8080
-    networks:
-      app-network:
     environment:
       DEBUG: "1"
       MONGODB_URL: "mongodb://mongos_router:27020"
@@ -21,15 +19,13 @@ services:
 
   redis:
     image: "redis:latest"
+    hostname: redis
     container_name: redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     command: [ "redis-server" ]
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.2
 
   # -------------------------
   # MONGOS ROUTER
@@ -37,12 +33,8 @@ services:
   mongos_router:
     image: mongo:latest
     container_name: mongos_router
+    hostname: mongos_router
     restart: always
-    ports:
-      - "27020:27020"
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.7
     command:
       [
         "mongos",
@@ -63,12 +55,8 @@ services:
   configSrv:
     image: mongo:latest
     container_name: configSrv
+    hostname: configSrv
     restart: always
-    ports:
-      - "27017:27017"
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.10
     volumes:
       - config-data:/data/db
     command: ["--configsvr","--replSet","config_server","--bind_ip_all","--port","27017"]
@@ -83,12 +71,8 @@ services:
   shard1:
     image: mongo:latest
     container_name: shard1
+    hostname: shard1
     restart: always
-    ports:
-      - "27018:27018"
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.9
     volumes:
       - shard1-data:/data/db
     command: ["--shardsvr","--replSet","shard1","--bind_ip_all","--port","27018"]
@@ -100,10 +84,8 @@ services:
   shard1_2:
     image: mongo:latest
     container_name: shard1_2
+    hostname: shard1_2
     restart: always
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.13
     volumes:
       - shard1-2-data:/data/db
     command: ["--shardsvr","--replSet","shard1","--bind_ip_all","--port","27018"]
@@ -115,10 +97,8 @@ services:
   shard1_3:
     image: mongo:latest
     container_name: shard1_3
+    hostname: shard1_3
     restart: always
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.14
     volumes:
       - shard1-3-data:/data/db
     command: ["--shardsvr","--replSet","shard1","--bind_ip_all","--port","27018"]
@@ -133,12 +113,8 @@ services:
   shard2:
     image: mongo:latest
     container_name: shard2
+    hostname: shard2
     restart: always
-    ports:
-      - "27019:27019"
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.8
     volumes:
       - shard2-data:/data/db
     command: ["--shardsvr","--replSet","shard2","--bind_ip_all","--port","27019"]
@@ -150,10 +126,8 @@ services:
   shard2_2:
     image: mongo:latest
     container_name: shard2_2
+    hostname: shard2_2
     restart: always
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.15
     volumes:
       - shard2-2-data:/data/db
     command: ["--shardsvr","--replSet","shard2","--bind_ip_all","--port","27019"]
@@ -165,10 +139,8 @@ services:
   shard2_3:
     image: mongo:latest
     container_name: shard2_3
+    hostname: shard2_3
     restart: always
-    networks:
-      app-network:
-        ipv4_address: 173.40.0.16
     volumes:
       - shard2-3-data:/data/db
     command: ["--shardsvr","--replSet","shard2","--bind_ip_all","--port","27019"]
@@ -176,14 +148,6 @@ services:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       start_period: 10s
-
-networks:
-  app-network:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 173.40.0.0/16
 
 volumes:
   config-data:
