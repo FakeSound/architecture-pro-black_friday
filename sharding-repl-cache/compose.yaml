@@ -1,0 +1,160 @@
+
+name: sharding-repl-cache
+
+services:
+  pymongo_api:
+    container_name: pymongo_api
+    build:
+      context: api_app
+      dockerfile: Dockerfile
+    depends_on:
+      - mongos_router
+    ports:
+      - 8080:8080
+    environment:
+      DEBUG: "1"
+      MONGODB_URL: "mongodb://mongos_router:27020"
+      MONGODB_DATABASE_NAME: "somedb"
+      REDIS_URL: "redis://redis:6379"
+
+  redis:
+    image: "redis:latest"
+    hostname: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: [ "redis-server" ]
+
+  # -------------------------
+  # MONGOS ROUTER
+  # -------------------------
+  mongos_router:
+    image: mongo:latest
+    container_name: mongos_router
+    hostname: mongos_router
+    restart: always
+    command:
+      [
+        "mongos",
+        "--configdb",
+        "config_server/configSrv:27017",
+        "--bind_ip_all",
+        "--port",
+        "27020"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # -------------------------
+  # CONFIG SERVER RS
+  # -------------------------
+  configSrv:
+    image: mongo:latest
+    container_name: configSrv
+    hostname: configSrv
+    restart: always
+    volumes:
+      - config-data:/data/db
+    command: ["--configsvr","--replSet","config_server","--bind_ip_all","--port","27017"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  # -------------------------
+  # SHARD1 RS (3 nodes)
+  # -------------------------
+  shard1:
+    image: mongo:latest
+    container_name: shard1
+    hostname: shard1
+    restart: always
+    volumes:
+      - shard1-data:/data/db
+    command: ["--shardsvr","--replSet","shard1","--bind_ip_all","--port","27018"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  shard1_2:
+    image: mongo:latest
+    container_name: shard1_2
+    hostname: shard1_2
+    restart: always
+    volumes:
+      - shard1-2-data:/data/db
+    command: ["--shardsvr","--replSet","shard1","--bind_ip_all","--port","27018"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  shard1_3:
+    image: mongo:latest
+    container_name: shard1_3
+    hostname: shard1_3
+    restart: always
+    volumes:
+      - shard1-3-data:/data/db
+    command: ["--shardsvr","--replSet","shard1","--bind_ip_all","--port","27018"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  # -------------------------
+  # SHARD2 RS (3 nodes)
+  # -------------------------
+  shard2:
+    image: mongo:latest
+    container_name: shard2
+    hostname: shard2
+    restart: always
+    volumes:
+      - shard2-data:/data/db
+    command: ["--shardsvr","--replSet","shard2","--bind_ip_all","--port","27019"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  shard2_2:
+    image: mongo:latest
+    container_name: shard2_2
+    hostname: shard2_2
+    restart: always
+    volumes:
+      - shard2-2-data:/data/db
+    command: ["--shardsvr","--replSet","shard2","--bind_ip_all","--port","27019"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+  shard2_3:
+    image: mongo:latest
+    container_name: shard2_3
+    hostname: shard2_3
+    restart: always
+    volumes:
+      - shard2-3-data:/data/db
+    command: ["--shardsvr","--replSet","shard2","--bind_ip_all","--port","27019"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      start_period: 10s
+
+volumes:
+  config-data:
+  shard1-data:
+  shard1-2-data:
+  shard1-3-data:
+  shard2-data:
+  shard2-2-data:
+  shard2-3-data:
+  redis_data:
